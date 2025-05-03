@@ -1,185 +1,166 @@
 # Exno.6-Prompt-Engg
-# Date:
-# Register no. 212222230074
+## Date:
+## Register no: 212222230180
 ## Aim: 
 Development of Python Code Compatible with Multiple AI Tools
 
 ## Algorithm: 
 Write and implement Python code that integrates with multiple AI tools to automate the task of interacting with APIs, comparing outputs, and generating actionable insights.
 
-Target Users: AI researchers, automation engineers, data scientists
-
 ## Objective:
+Build a Python script that:
 
-1. Reduce manual API interactions
+a. Connects to multiple AI services via APIs.
 
-2. Automatically benchmark multiple AI models
+b. Sends standardized prompts or inputs.
 
-3. Extract usable insights from varied outputs (e.g., sentiment, clarity, relevance)
+c. Collects and stores the outputs.
 
-## 1. Prompt Patterns for Design Aspects
+d. Compares the outputs for quality, tone, performance, or accuracy.
 
-### A. Idea Generation Prompt
-#### Prompt: 
-“What modules and design strategies can make a Python program modular and AI-tool agnostic?”
+e. Generates reports or logs for further analysis.
 
-#### Features:
+This process helps in benchmarking AI tools and determining the best tool for a particular task or use case.
 
-Abstract AIClient base class with query() method
+## Procedure / Algorithm:
+### Step 1: Define the Use Case
+Choose a specific AI task where multiple tools can be compared, such as:
 
-Plugins for each tool (OpenAI, Hugging Face, etc.)
+a. Text summarization
 
-Output comparison strategy (e.g., similarity score, sentiment match)
+b. Image generation
 
-Logging and visualization module
+c. Audio synthesis
 
-### B. Persona and Context Prompt
-#### Prompt: 
-“Design the interface for a Python module usable by non-experts in AI, with readable documentation and error messages.”
+d. Sentiment analysis
 
-#### Result:
+e. Translation
 
-Simple CLI interface: python run_query.py --prompt "Summarize climate change"
+Example Use Case: Compare summarization capabilities of ChatGPT (OpenAI) and Cohere.
 
-Configurable YAML/JSON for API keys and settings
+### Step 2: Set Up API Access
+Register or subscribe to APIs of the tools you want to use.
 
-Built-in --explain mode to output how each AI tool processed the prompt
-
-### C. Exploratory Prompt
-#### Prompt: 
-“List all AI APIs supporting text generation and summarize their input/output format.”
-
-#### Tools Explored:
-
-OpenAI GPT: JSON input, streaming output
-
-Cohere: Text input, embeddings
-
-Hugging Face Transformers: Model-specific format, requires tokenization
-
-Google PaLM: REST API with rich metadata
-
-### D. Refinement Prompt
-#### Prompt: 
-“Modify the pipeline to support asynchronous querying and retry logic in case of rate-limiting or failure.”
-
-#### Update:
-
-Added aiohttp for async requests
-
-Implemented retry decorators with exponential backoff
-
-### E. Scenario Testing Prompt
-#### Prompt: 
-“Run the same query (‘Explain quantum computing in simple terms’) through all tools and compare clarity.”
-
-#### Execution Result:
-
-GPT-4: Best at analogies
-
-Cohere: Technical but concise
-
-Hugging Face model: Verbose and less accurate
-
-### F. Error Handling Prompt
-#### Prompt: “How should the script handle API timeouts, incorrect credentials, and unstructured responses?”
-
-#### Solutions:
-
-Custom error classes: APIConnectionError, InvalidResponseError
-
-Environment variable validation on startup
-
-JSON schema validation of responses
-
-### 2. Implementation Plan
-#### 1. Setup:
-
-Install libraries: openai, requests, aiohttp, dotenv, jsonschema
-
-Load credentials from .env
-
-#### 2. Modular API Wrappers:
-
-clients/openai_client.py
-
-clients/cohere_client.py
-
-clients/hf_client.py
-
-#### 3. Async Execution Manager:
-
-Collects all responses in parallel
-
-#### 4. Output Comparison Engine:
-
-Uses difflib + NLP metrics (e.g., BLEU, ROUGE)
-
-#### 5. Insight Generator:
-
-Produces a summary + actionable decision (e.g., “GPT-4 output preferred for educational content”)
-
-#### 6. Logging/Report:
-
-Auto-generates markdown + CSV log
-
-### 3. Evaluation and Feedback Collection
-#### Prompt:
-“What feedback did users give after running the tool for a week?”
-
-#### Method:
-Feedback collected via CLI prompts and GitHub Issues
-
-#### Findings:
-
-#### Pros:
-Speed, clarity, comparison matrix
-
-#### Cons: 
-Minor bugs with new API formats
-
-#### Response:
-
-Added auto-schema detection
-
-Scheduled weekly tool updates
-
-### 4. Prototype/System Outline
-#### Repo Structure:
+Store API keys securely (e.g., using environment variables or secrets module).
 
 ```python
-/ai_compare_tool/
-├── run_query.py
-├── clients/
-│   ├── base.py
-│   ├── openai_client.py
-│   ├── cohere_client.py
-│   └── hf_client.py
-├── insights/
-│   └── compare.py
-├── utils/
-│   └── logger.py
-└── .env
+import os
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+COHERE_API_KEY = os.getenv("COHERE_API_KEY")
 ```
-#### Output Format:
 
-Markdown table + CSV log
+### Step 3: Write API Interaction Functions
+Create reusable functions to interact with each AI service.
 
-#### Summary: 
-“Tool X produced most readable output”
+```python
 
-### 5. User Testing Results and Improvement Plan
-#### Sample Feedback:
+import openai
+import cohere
 
-“Great for quick benchmarking between tools”
+def get_openai_summary(text):
+    openai.api_key = OPENAI_API_KEY
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": f"Summarize this: {text}"}]
+    )
+    return response['choices'][0]['message']['content']
 
-“Would love plugin support for Claude and Gemini”
+def get_cohere_summary(text):
+    co = cohere.Client(COHERE_API_KEY)
+    response = co.summarize(text=text)
+    return response.summary
+```
 
-#### Next Steps:
+### Step 4: Prepare a Prompt Dataset
+Store a list of test inputs (e.g., articles or paragraphs) to run through both tools.
 
-Add support for Claude & Gemini
+```python
 
-Build web dashboard for visualization
+test_inputs = [
+    "Artificial intelligence (AI) is rapidly evolving and...",
+    "Climate change is one of the most pressing issues..."
+]
+```
+
+### Step 5: Compare Outputs Programmatically
+Loop through inputs, collect summaries, and store them for analysis.
+
+```python
+
+results = []
+
+for text in test_inputs:
+    openai_output = get_openai_summary(text)
+    cohere_output = get_cohere_summary(text)
+    
+    comparison = {
+        "input": text,
+        "openai_summary": openai_output,
+        "cohere_summary": cohere_output
+    }
+    results.append(comparison)
+```
+
+### Step 6: Generate Actionable Insights
+Apply analysis, such as:
+
+a. Word count comparison
+
+b. Sentiment scoring
+
+c. Keyword extraction
+
+d. Readability score
+
+```python
+
+from textblob import TextBlob
+
+def analyze_summary(summary):
+    blob = TextBlob(summary)
+    return {
+        "word_count": len(summary.split()),
+        "sentiment": blob.sentiment.polarity,
+        "readability": blob.sentiment.subjectivity
+    }
+
+for result in results:
+    result["openai_analysis"] = analyze_summary(result["openai_summary"])
+    result["cohere_analysis"] = analyze_summary(result["cohere_summary"])
+```
+
+### Step 7: Output a Summary Report
+Export findings to JSON or CSV.
+
+```python
+
+import json
+
+with open("summary_comparison.json", "w") as f:
+    json.dump(results, f, indent=4)
+```
+Result:
+The Python code successfully:
+
+1. Connected with multiple AI tools using APIs.
+
+2. Sent uniform prompts for consistent evaluation.
+
+3. Collected and compared results using natural language metrics.
+
+4. Generated structured, actionable insights that can be used to evaluate tool performance.
+
+## Conclusion:
+This experiment demonstrates how Python can serve as a powerful bridge between multiple AI tools, enabling developers to create multi-model pipelines that evaluate, compare, or combine the strengths of various services. This integration supports:
+
+1. Better decision-making on tool selection
+
+2. Automation of evaluation and benchmarking
+
+3. Enhanced productivity by combining outputs
+
+Such a system is scalable and can be adapted for broader use cases including multi-tool chatbots, creative content workflows, or research benchmarking.
 
 
 ## Result: 
