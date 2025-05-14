@@ -1,6 +1,6 @@
 # Exno.6-Prompt-Engg
 ## Date:
-## Register no: 212222230180
+## Register no: 212222230074
 ## Aim: 
 Development of Python Code Compatible with Multiple AI Tools
 
@@ -24,132 +24,100 @@ This process helps in benchmarking AI tools and determining the best tool for a 
 
 ## Procedure / Algorithm:
 ### Step 1: Define the Use Case
-Choose a specific AI task where multiple tools can be compared, such as:
+#### AI Tools by Modality
+### 1. Image Generation
+Stability AI (Stable Diffusion via Stability API)
 
-a. Text summarization
+OpenAI DALL·E
 
-b. Image generation
+Hugging Face Diffusers (local or hosted models)
 
-c. Audio synthesis
+### 2. Voice Enhancement
+Adobe Enhance Speech (API access via Adobe Podcast)
 
-d. Sentiment analysis
+ElevenLabs (for voice synthesis and enhancement)
 
-e. Translation
+iZotope RX (for pro audio cleanup, often used offline)
 
-Example Use Case: Compare summarization capabilities of ChatGPT (OpenAI) and Cohere.
+### 3. Video Generation
+Runway ML (Gen-2)
 
-### Step 2: Set Up API Access
-Register or subscribe to APIs of the tools you want to use.
+Pika Labs
 
-Store API keys securely (e.g., using environment variables or secrets module).
+Synthesia (for avatar videos, more templated)
 
-```python
+## 1. Image Generation (Stable Diffusion via Stability AI)
+```
+
+from diffusers import StableDiffusionPipeline
+import torch
+
+def generate_image(prompt: str, output_path="output_image.png"):
+    print("Loading Stable Diffusion model...")
+    pipe = StableDiffusionPipeline.from_pretrained(
+        "CompVis/stable-diffusion-v1-4",
+        torch_dtype=torch.float16,
+        revision="fp16"
+    ).to("cuda")
+
+    print(f"Generating image for prompt: {prompt}")
+    image = pipe(prompt).images[0]
+    image.save(output_path)
+    print(f"✅ Image saved to {output_path}")
+
+# Example
+generate_image("A futuristic city under the stars", "city_image.png")
+```
+![image](https://github.com/user-attachments/assets/d8faf2a0-f067-4bce-9e5f-4bfc4aa0891e)
+
+## 2. VOICE ENHANCEMENT (Noisereduce)
+```
+import noisereduce as nr
+import librosa
+import soundfile as sf
+
+def enhance_audio(input_path: str, output_path: str):
+    print(f"Loading audio file: {input_path}")
+    y, sr = librosa.load(input_path, sr=None)
+    print("Reducing noise...")
+    reduced_noise = nr.reduce_noise(y=y, sr=sr)
+    sf.write(output_path, reduced_noise, sr)
+    print(f"✅ Enhanced audio saved to {output_path}")
+
+# Upload an audio file to Colab for testing
+from google.colab import files
+print("⬆️ Upload a noisy WAV file (mono, short length recommended):")
+uploaded = files.upload()
+
+for fname in uploaded:
+    enhance_audio(fname, "enhanced_" + fname)
+```
+![image](https://github.com/user-attachments/assets/2be934da-4bfe-4edf-9fbe-ebea2db5d8ce)
+
+## 3. VIDEO GENERATION (ModelScope)
+```
+from modelscope.pipelines import pipeline
+from modelscope.outputs import OutputKeys
 import os
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-COHERE_API_KEY = os.getenv("COHERE_API_KEY")
+def generate_video(prompt: str):
+    print("Loading ModelScope video generator...")
+    text2video = pipeline(task="text-to-video-synthesis", model="damo/text-to-video-synthesis")
+    print(f"Generating video for prompt: {prompt}")
+    result = text2video({'text': prompt})
+    video_path = result[OutputKeys.OUTPUT_VIDEO]
+    print(f"✅ Video saved to: {video_path}")
+    return video_path
+
+# Example
+video_file = generate_video("A panda riding a bicycle in Times Square")
+
+# Download link
+from IPython.display import HTML
+HTML(f'<video width=400 controls><source src="{video_file}" type="video/mp4"></video>')
 ```
+![image](https://github.com/user-attachments/assets/d4bd9227-f0be-41df-81ab-3af84b960977)
 
-### Step 3: Write API Interaction Functions
-Create reusable functions to interact with each AI service.
-
-```python
-
-import openai
-import cohere
-
-def get_openai_summary(text):
-    openai.api_key = OPENAI_API_KEY
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": f"Summarize this: {text}"}]
-    )
-    return response['choices'][0]['message']['content']
-
-def get_cohere_summary(text):
-    co = cohere.Client(COHERE_API_KEY)
-    response = co.summarize(text=text)
-    return response.summary
-```
-
-### Step 4: Prepare a Prompt Dataset
-Store a list of test inputs (e.g., articles or paragraphs) to run through both tools.
-
-```python
-
-test_inputs = [
-    "Artificial intelligence (AI) is rapidly evolving and...",
-    "Climate change is one of the most pressing issues..."
-]
-```
-
-### Step 5: Compare Outputs Programmatically
-Loop through inputs, collect summaries, and store them for analysis.
-
-```python
-
-results = []
-
-for text in test_inputs:
-    openai_output = get_openai_summary(text)
-    cohere_output = get_cohere_summary(text)
-    
-    comparison = {
-        "input": text,
-        "openai_summary": openai_output,
-        "cohere_summary": cohere_output
-    }
-    results.append(comparison)
-```
-
-### Step 6: Generate Actionable Insights
-Apply analysis, such as:
-
-a. Word count comparison
-
-b. Sentiment scoring
-
-c. Keyword extraction
-
-d. Readability score
-
-```python
-
-from textblob import TextBlob
-
-def analyze_summary(summary):
-    blob = TextBlob(summary)
-    return {
-        "word_count": len(summary.split()),
-        "sentiment": blob.sentiment.polarity,
-        "readability": blob.sentiment.subjectivity
-    }
-
-for result in results:
-    result["openai_analysis"] = analyze_summary(result["openai_summary"])
-    result["cohere_analysis"] = analyze_summary(result["cohere_summary"])
-```
-
-### Step 7: Output a Summary Report
-Export findings to JSON or CSV.
-
-```python
-
-import json
-
-with open("summary_comparison.json", "w") as f:
-    json.dump(results, f, indent=4)
-```
-Result:
-The Python code successfully:
-
-1. Connected with multiple AI tools using APIs.
-
-2. Sent uniform prompts for consistent evaluation.
-
-3. Collected and compared results using natural language metrics.
-
-4. Generated structured, actionable insights that can be used to evaluate tool performance.
 
 ## Conclusion:
 This experiment demonstrates how Python can serve as a powerful bridge between multiple AI tools, enabling developers to create multi-model pipelines that evaluate, compare, or combine the strengths of various services. This integration supports:
